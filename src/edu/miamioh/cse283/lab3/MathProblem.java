@@ -15,6 +15,7 @@ public class MathProblem {
 		double a = s.nextDouble();
 		String op = s.next();
 		double b = s.nextDouble();
+		s.close();
 		
 		if(op.contains("-")) {
 			return a - b;

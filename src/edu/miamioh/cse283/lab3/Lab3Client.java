@@ -34,63 +34,64 @@ public class Lab3Client {
 			System.out.println("Usage: java Lab3Client <remote address> <remote port>");
 			return;
 		}
-
+		
+		InetAddress i=null;
 		Socket client=null;
+
+		try {
+			i = InetAddress.getByName(args[0]);
+		} catch (UnknownHostException e) {
+			System.out.println(e.getMessage());
+			return;
+		}
 		
 		try {
+			int port = Integer.parseInt(args[1]);
 			// Construct a socket and connect it to the remote address and port given by the command line arguments:
 			// client = new Socket...
+			client = new Socket(i, port);
 			System.out.println("CONNECTED TO: " + client.getRemoteSocketAddress());
 			
-			// Build the writer & reader from the client's socket input and output streams: 
-			PrintWriter out=null;
-			BufferedReader in=null;
+			// Build the writer & reader from the client's socket input and output streams:
+			PrintWriter out = new PrintWriter(client.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
 			String response=null;
 			do {
 				System.out.println("REQUESTING WORK");
-				// send a get work message to the server (use "out" from above):
+				out.println(GET_WORK);
 				
-				// read its response (use "in" from above):
-				// response = ...
+				response = in.readLine();
+				System.out.println(response);
 				
-				// if the response includes work:
 				if(response.startsWith(AMP_WORK)) {
-					// read the next line (which will contain the math problem):
-					// response = ...
-					System.out.println("  WORK: " + response);
+					String prompt = in.readLine();
+					System.out.println("  WORK: " + prompt);
+					
+					if (prompt.startsWith(AMP_NONE))
+						break;
 
-					// solve the math problem (see MathProblem.solve, in this package)
-					Double ans=null;
+					Double ans = MathProblem.solve(prompt);
 					
-					// if ans is null, then the math problem was malformed.
-					// you can choose how to handle this case, but make sure that
-					// you don't break the server.
-					if(ans == null) {
+					if(ans == null)
 						ans = 0.0;
-					}
-										
-					// send the answer to the server (don't forget the header, use "out"):
+					
 					System.out.println("  SENDING ANSWER: " + ans);
+					out.println(PUT_ANSWER);
+					out.println(ans);
 					
-					// the server should respond with OK if everything went well
-					// note: OK does not mean the answer is right, just that the 
-					// server understood the message.
-					
-					// receive the response (use "in"):
-					// response = ...
+					response = in.readLine();
 					if(response.startsWith(AMP_OK)) {
 						System.out.println("  ANSWER RECEIVED");
 					} else {
 						System.out.println("  ANSWER MALFORMED");
 					}
 				}
-			} while(!response.startsWith(AMP_NONE)); // loop until an AMP_NONE response is received
+			} while(!response.startsWith(AMP_NONE));
 			
 			System.out.println("NO WORK AVAILABLE; TERMINATING");
 
 		} finally {
-			// close the socket:
 			if(client != null) {
 				client.close();
 			}
